@@ -1,0 +1,23 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: reto-aws
+
+  r2dbc:
+    url: ${R2DBC_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  springdoc:
+    api-docs:
+      path: /v3/api-docs
+    swagger-ui:
+      path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    org.springframework.r2dbc: DEBUG
+    io.r2dbc.postgresql: INFO

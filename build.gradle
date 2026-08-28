@@ -1,0 +1,139 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.16'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
+}
+
+group = 'com.pragma'
+version = '1.0.0'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+ext {
+	mapstructVersion = '1.6.3'
+	springdocVersion = '2.8.17'
+	jacocoVersion = '0.8.14'
+	lombokVersion = '1.18.46'
+	lombokMapstructBindingVersion = '0.2.0'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	// WEBFLUX
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// VALIDATION
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// R2DBC
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+
+	// POSTGRESQL R2DBC
+	implementation 'org.postgresql:r2dbc-postgresql'
+
+	// MAPSTRUCT
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+
+	// SWAGGER
+	implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:${springdocVersion}") {
+		exclude group: 'org.apache.commons', module: 'commons-lang3'
+	}
+
+	implementation 'org.apache.commons:commons-lang3:3.18.0'
+
+	// LOMBOK
+	compileOnly "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVersion}"
+
+	testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+	testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+	// TEST
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.mockito:mockito-core:5.14.2'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+
+tasks.named('test') {
+	useJUnitPlatform()
+	finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs += ['-parameters']
+}
+
+jacoco {
+	toolVersion = jacocoVersion
+}
+
+jacocoTestReport {
+	dependsOn test
+
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+
+	classDirectories.setFrom(
+			files(classDirectories.files.collect {
+				fileTree(dir: it, exclude: [
+						'com/pragma/reto_aws/RetoAwsApplication*',
+						'com/pragma/reto_aws/application/dto/**',
+						'com/pragma/reto_aws/application/mapper/**',
+						'com/pragma/reto_aws/domain/model/**',
+						'com/pragma/reto_aws/infrastructure/out/postgres/entity/**',
+						'com/pragma/reto_aws/infrastructure/out/postgres/repository/**',
+						'com/pragma/reto_aws/infrastructure/out/postgres/mapper/**'
+				])
+			})
+	)
+}
+
+jacocoTestCoverageVerification {
+	dependsOn test
+
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.95
+			}
+		}
+	}
+
+	classDirectories.setFrom(
+			files(classDirectories.files.collect {
+				fileTree(dir: it, exclude: [
+						'com/pragma/reto_aws/RetoAwsApplication*',
+						'com/pragma/reto_aws/application/dto/**',
+						'com/pragma/reto_aws/application/mapper/**',
+						'com/pragma/reto_aws/domain/model/**',
+						'com/pragma/reto_aws/infrastructure/out/postgres/entity/**',
+						'com/pragma/reto_aws/infrastructure/out/postgres/repository/**',
+						'com/pragma/reto_aws/infrastructure/out/postgres/mapper/**'
+
+				])
+			})
+	)
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('jacocoTestCoverageVerification')
+}
