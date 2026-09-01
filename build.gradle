@@ -49,6 +49,9 @@ dependencies {
 		exclude group: 'org.apache.commons', module: 'commons-lang3'
 	}
 
+	// ACTUATOR
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
 	implementation 'org.apache.commons:commons-lang3:3.18.0'
 
 	// LOMBOK

@@ -6,9 +6,9 @@ spring:
     name: reto-aws
 
   r2dbc:
-    url: ${R2DBC_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: r2dbc:postgresql://localhost:5432/reto_aws
+    username: dummyValue
+    password: dummyValue
 
   springdoc:
     api-docs:
