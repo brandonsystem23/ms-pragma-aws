@@ -144,7 +144,7 @@ tasks.named('check') {
 
 sonar {
 	properties {
-		property "sonar.host.url", "http://localhost:9000"
+		property "sonar.host.url", "http://host.docker.internal:9000"
 		property "sonar.token", "squ_88d0a629b7a4e92983cb893f0cc8ee1821dd41dc"
 	}
 }
