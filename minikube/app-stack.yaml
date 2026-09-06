@@ -1,0 +1,152 @@
+# ==========================================
+# 1. ConfigMap para inicializar la BD
+# ==========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+data:
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        full_name VARCHAR(255),
+        identification_number VARCHAR(100),
+        email VARCHAR(255)
+    );
+---
+# ==========================================
+# 2. Base de datos PostgreSQL (Deployment)
+# ==========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "mi_base"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: init-db-volume
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init-db-volume
+          configMap:
+            name: postgres-init-script
+---
+# ==========================================
+# 3. Servicio interno para PostgreSQL
+# ==========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+# ==========================================
+# 4. Microservicio Spring Boot (Deployment)
+# ==========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reto-aws-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reto-aws
+  template:
+    metadata:
+      labels:
+        app: reto-aws
+    spec:
+      containers:
+        - name: reto-aws
+          image: reto-aws:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: R2DBC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: SPRING_R2DBC_URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+---
+# ==========================================
+# 5. Servicio externo para el Microservicio
+# ==========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: reto-aws-service
+spec:
+  selector:
+    app: reto-aws
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: NodePort
+
+---
+# ==========================================
+# 6. Ingress para el Microservicio
+# ==========================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: reto-aws-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: reto-aws.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: reto-aws-service
+                port:
+                  number: 8081
