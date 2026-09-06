@@ -92,7 +92,7 @@ spec:
     spec:
       containers:
         - name: reto-aws
-          image: reto-aws:latest
+          image: ms-pragma-aws:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8081
