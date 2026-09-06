@@ -12,7 +12,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(value = "users", schema = "pragma")
+@Table(value = "users")
 public class UserEntity {
 
     @Id
