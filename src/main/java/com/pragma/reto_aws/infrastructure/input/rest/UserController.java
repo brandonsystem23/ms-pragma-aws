@@ -46,4 +46,11 @@ public class UserController {
         return iUserHandler.findUser(userId);
     }
 
+    @GetMapping("/example")
+    @Operation(summary = "ejemplo GET", description = "Ejemplo de operacion GET en swagger")
+    public Mono<String> getExample() {
+
+        return Mono.just("Hola mundo");
+    }
+
 }
